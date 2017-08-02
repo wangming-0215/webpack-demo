@@ -1,0 +1,9 @@
+body {
+    font-family: 'FontAwesome';
+    background: yellow;
+    display: flex
+}
+
+.redButton {
+    background: red
+}
