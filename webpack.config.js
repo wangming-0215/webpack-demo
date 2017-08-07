@@ -2,6 +2,7 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const merge = require("webpack-merge");
 const parts = require("./webpack.parts");
+const webpack = require("webpack");
 
 const PATHS = {
     app: path.resolve(__dirname, "app"),
@@ -49,7 +50,7 @@ const commonConfig = merge([
     // parts.loadCSS()
     parts.loadFonts({
         options: {
-            name: "[name].[ext]"
+            name: "[name].[hash:8].[ext]"
         }
     })
 ]);
@@ -66,17 +67,22 @@ const productionConfig = merge([
     //     // ]
     // },
     {
+        output: {
+            chunkFilename: "[name].[chunkhash:8].js",
+            filename: "[name].[chunkhash:8].js"
+        },
         performance: {
             hints: "warning", // error or false are valid too
             maxEntrypointSize: 100000, // in bytes
             maxAssetSize: 45000
-        }
+        },
+        plugins: [new webpack.HashedModuleIdsPlugin()]
     },
     parts.extractCSS({ use: ["css-loader", parts.autoprefix()] }),
     parts.loadImages({
         options: {
             limit: 15000,
-            name: "[name].[ext]"
+            name: "[name].[hash:8].[ext]"
         }
     }),
     parts.generateSourceMaps({ type: "source-map" }),
@@ -93,6 +99,10 @@ const productionConfig = merge([
                 resource &&
                 resource.indexOf("node_modules") >= 0 &&
                 resource.match(/\.js$/)
+        },
+        {
+            name: "manifest",
+            minChunks: Infinity // optional, Infinity tells webpack not to move any modules to the resulting bundle
         }
     ]),
     parts.clean(PATHS.build),
@@ -107,10 +117,14 @@ const productionConfig = merge([
             // potentially unsafe transformations.
             safe: true
         }
-    })
+    }),
+    parts.setFreeVariable("process.env.NODE_ENV", "production")
 ]);
 
 const developmentConfig = merge([
+    {
+        plugins: [new webpack.NamedModulesPlugin()]
+    },
     parts.devServer({
         host: process.env.HOST,
         port: process.env.PORT

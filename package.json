@@ -7,7 +7,8 @@
     "lint:js": "eslint app/ webpack.*.js --cache",
     "lint:css": "stylelint app/**/*.css",
     "start": "webpack-dev-server --env development",
-    "build": "rm -rf build && webpack --env production"
+    "build": "webpack --env production",
+    "stats": "webpack --env production --profile --json > stats.json"
   },
   "keywords": [],
   "author": "",
@@ -41,6 +42,7 @@
     "webpack-merge": "^4.1.0"
   },
   "dependencies": {
+    "babel-plugin-external-helpers": "^6.22.0",
     "font-awesome": "^4.7.0",
     "jquery": "^3.2.1",
     "react": "^15.6.1"

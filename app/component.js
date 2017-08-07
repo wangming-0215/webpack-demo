@@ -30,7 +30,7 @@
 export default () => {
     const element = document.createElement("div");
     element.className = "pure-button";
-    element.innerHTML = "Hello World";
+    element.innerHTML = "Hello World!";
     element.onclick = () => {
         require.ensure([], require => {
             element.textContent = require("./lazy").default;

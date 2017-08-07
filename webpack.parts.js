@@ -54,7 +54,7 @@ const ExtractTextPlugin = require("extract-text-webpack-plugin");
 exports.extractCSS = ({ include, exclude, use }) => {
     // output extracted css to a file
     const plugin = new ExtractTextPlugin({
-        filename: "[name].css"
+        filename: "[name].[contenthash:8].css"
     });
 
     return {
@@ -168,3 +168,11 @@ exports.minifyCSS = ({ options }) => ({
         })
     ]
 });
+// set environment variables
+exports.setFreeVariable = (key, value) => {
+    const env = {};
+    env[key] = JSON.stringify(value);
+    return {
+        plugins: [new webpack.DefinePlugin(env)]
+    };
+};
