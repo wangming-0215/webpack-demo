@@ -1,3 +1,3 @@
 {
-    "plugins": ["syntax-dynamic-import", "external-helpers"]
+    "plugins": ["syntax-dynamic-import"]
 }

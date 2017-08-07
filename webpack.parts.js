@@ -11,6 +11,21 @@ exports.devServer = ({ host, port } = {}) => ({
     }
 });
 
+// babel-loader
+exports.loadJavaScript = ({ include, exclude, options }) => ({
+    module: {
+        rules: [
+            {
+                test: /\.js$/,
+                include,
+                exclude,
+                use: "babel-loader",
+                options
+            }
+        ]
+    }
+});
+
 exports.lintJavaScripe = ({ include, exclude, options }) => ({
     module: {
         rules: [
