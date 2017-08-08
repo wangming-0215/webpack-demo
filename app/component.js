@@ -27,10 +27,10 @@
 // };
 
 // require.ensure()
-export default () => {
+export default (text = "Hello World!") => {
     const element = document.createElement("div");
     element.className = "pure-button";
-    element.innerHTML = "Hello World!";
+    element.innerHTML = text;
     element.onclick = () => {
         require.ensure([], require => {
             element.textContent = require("./lazy").default;

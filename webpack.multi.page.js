@@ -1,0 +1,193 @@
+const path = require("path");
+const merge = require("webpack-merge");
+const parts = require("./webpack.parts");
+const webpack = require("webpack");
+
+const PATHS = {
+    app: path.resolve(__dirname, "app"),
+    build: path.resolve(__dirname, "build")
+};
+
+// module.exports = {
+//     // Entries have to resolve to files! They rely on Node
+//     // convention by default so if a directory contains *index.js*,
+//     // it resolves to that.
+//     entry: {
+//         app: PATHS.app
+//     },
+//     output: {
+//         path: PATHS.build,
+//         filename: "[name].js"
+//     },
+//     plugins: [
+//         new HtmlWebpackPlugin({
+//             title: "Webpack Demo"
+//         })
+//     ]
+// };
+
+const commonConfig = merge([
+    {
+        // Entries have to resolve to files! They rely on Node
+        // convention by default so if a directory contains *index.js*,
+        // it resolves to that.
+        output: {
+            path: PATHS.build,
+            filename: "[name].js",
+            publicPath: "/"
+        }
+    },
+    parts.lintJavaScripe({ include: PATHS.app }),
+    // parts.loadCSS()
+    parts.loadFonts({
+        options: {
+            name: "[name].[hash:8].[ext]"
+        }
+    })
+]);
+
+const productionConfig = merge([
+    // {
+    //     entry: {
+    //         vendor: ["react"]
+    //     }
+    //     // plugins: [
+    //     //     new webpack.optimize.CommonsChunkPlugin({
+    //     //         name: "vendor"
+    //     //     })
+    //     // ]
+    // },
+    {
+        output: {
+            chunkFilename: "[name].[chunkhash:8].js",
+            filename: "[name].[chunkhash:8].js"
+        },
+        performance: {
+            hints: "warning", // error or false are valid too
+            maxEntrypointSize: 100000, // in bytes
+            maxAssetSize: 45000
+        },
+        plugins: [new webpack.HashedModuleIdsPlugin()]
+    },
+    parts.extractCSS({ use: ["css-loader", parts.autoprefix()] }),
+    parts.loadImages({
+        options: {
+            limit: 15000,
+            name: "[name].[hash:8].[ext]"
+        }
+    }),
+    parts.generateSourceMaps({ type: "source-map" }),
+    // minChunks
+    // resource represents the path of the full path of the resource being imported. Example: .../webpack-demo/node_modules/purecss/build/pure-min.css.
+    // context returns the path to the directory in which the resource is. Example: .../webpack-demo/node_modules/purecss/build.
+    // rawRequest contains the whole unresolved request. Example: !!../../css-loader/index.js!.../pure-min.css.
+    // userRequest is a version of the request that has been resolved to a query. Example: .../node_modules/css-loader/index.js!.../pure-min.css.
+    // chunks tells in which chunks the module is contained. Check chunks.length to tell how many times webpack has included it to control output on the chunk level.
+    parts.extractBundles([
+        {
+            name: "vendor",
+            minChunks: ({ resource }) =>
+                resource &&
+                resource.indexOf("node_modules") >= 0 &&
+                resource.match(/\.js$/)
+        },
+        {
+            name: "manifest",
+            minChunks: Infinity // optional, Infinity tells webpack not to move any modules to the resulting bundle
+        }
+    ]),
+    parts.clean(PATHS.build),
+    parts.attachRevision(),
+    parts.minifyJavaScript(),
+    parts.minifyCSS({
+        options: {
+            discardComments: {
+                removeAll: true
+            },
+            // Run cssnano in safe mode to avoid
+            // potentially unsafe transformations.
+            safe: true
+        }
+    }),
+    parts.setFreeVariable("process.env.NODE_ENV", "production")
+]);
+
+const developmentConfig = merge([
+    {
+        plugins: [new webpack.NamedModulesPlugin()]
+    },
+    parts.devServer({
+        host: process.env.HOST,
+        port: process.env.PORT
+    }),
+    parts.loadCSS(),
+    {
+        output: {
+            devtoolModuleFilenameTemplate: "webpack:/"
+        }
+    },
+    parts.generateSourceMaps({ type: "cheap-module-eval-source-map" })
+]);
+
+// const developmentConfig = () => {
+//     const config = {
+//         module: {
+//             rules: [
+//                 {
+//                     test: /\.js$/,
+//                     enforce: 'pre',
+//                     loader: 'eslint-loader',
+//                     options: {
+//                         emitWarning: true,
+//                     },
+//                 },
+//             ],
+//         },
+//         devServer: {
+//             // overlay: true is equivalent
+//             overlay: {
+//                 errors: true,
+//                 warnings: true,
+//             },
+//             // Enable history API fallback so HTML5 History API based
+//             // routing works. Good for complex setups
+//             historyApiFallback: true,
+//             // Display only errors to reduce the amount of output.
+//             stats: 'errors-only',
+//             // Parse host and port from env to allow customization.
+//             //
+//             // If you use Docker, Vagrant or Cloud9, set
+//             // host: options.host || '0.0.0.0';
+//             //
+//             // 0.0.0.0 is available to all network devices
+//             // unlike default `localhost`.
+//             host: process.env.HOST,
+//             port: process.env.PORT,
+//         },
+//     };
+
+//     return Object.assign({}, commonConfig, config);
+// };
+
+module.exports = env => {
+    // console.log("env:", env);
+    // return commonConfig;
+    const pages = [
+        parts.page({
+            title: "Webpack Demo",
+            entry: { app: PATHS.app },
+            chunks: ["app", "manifest", "vendor"]
+        }),
+        parts.page({
+            title: "Another Demo",
+            path: "another",
+            entry: { another: path.join(PATHS.app, "another.js") },
+            chunks: ["another", "manifest", "vendor"]
+        })
+    ];
+
+    const config = env === "production" ? productionConfig : developmentConfig;
+    return pages.map(page => {
+        return merge(commonConfig, config, page);
+    });
+};

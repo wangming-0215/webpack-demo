@@ -6,11 +6,15 @@ module.exports = {
         node: true
     },
     parser: "babel-eslint",
-    extends: "eslint:recommended",
+    extends: ["eslint:recommended", "plugin:react/recommended"],
     parserOptions: {
         sourceType: "module",
-        allowInportExportEverywhere: true
+        allowImportExportEverywhere: true,
+        ecmaFeatures: {
+            jsx: true
+        }
     },
+    plugins: ["react"],
     rules: {
         indent: ["error", 4],
         "linebreak-style": ["error", "windows"],
